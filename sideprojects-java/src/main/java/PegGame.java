@@ -227,13 +227,14 @@ public class PegGame {
         return true;
     }
 
+    private static int size = 45;
     public static void print(PegGame pegGame){
         System.out.println(getPrint(pegGame));
     }
     public static String getPrint(PegGame pegGame){
-        String  pegs        = fill(Long.toBinaryString(pegGame.pegs)),
-                empties     = fill(Long.toBinaryString(pegGame.empties)),
-                outOfBounds = fill(Long.toBinaryString(pegGame.outOfBounds));
+        String  pegs        = BitHelper.fill(Long.toBinaryString(pegGame.pegs),size),
+                empties     = BitHelper.fill(Long.toBinaryString(pegGame.empties),size),
+                outOfBounds = BitHelper.fill(Long.toBinaryString(pegGame.outOfBounds),size);
         String s = "";
         for (int i = 0; i < pegs.toCharArray().length; i++) {
             if(pegs.toCharArray()[i] == '1') s+= "1";
@@ -282,24 +283,6 @@ public class PegGame {
      */
 
 
-    private static String fill(String v){
-        if(v.length() == 45)
-            return v;
-        StringBuilder vBuilder = new StringBuilder(v);
-        while (vBuilder.length()<45)
-            vBuilder.insert(0, 0);
-        v = vBuilder.toString();
-        return v;
-    }
-
-    public static void printLong(long v){
-        String s = fill(Long.toBinaryString(v)), ss = "";
-        for (int i = 0; i < s.toCharArray().length; i++) {
-            ss += s.toCharArray()[i];
-            if((i+1)%9==0)ss += "\n";
-        }
-        System.out.println(ss);
-    }
 
     private static String getStringRepresentationPegs(){
         String s = "";
