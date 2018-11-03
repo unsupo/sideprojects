@@ -1,4 +1,3 @@
-import java.io.File;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -6,17 +5,50 @@ public class SudokuBits {
     public static void main(String[] args) throws Exception {
         //give an array of ints representing the sudoku puzzle to solve where any number not in [1-9] is a blank spot
         SudokuBits sb = new SudokuBits(new int[]{
-                1, -1, -1, 2, -1, -1, -1, -1, -1,
-                4, -1, -1, -1, -1, -1, -1, -1, -1,
-                -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                5, -1, -1, -1, -1, -1, -1, -1, -1,
-                -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                7, -1, -1, 5, -1, -1, -1, -1, 4,
-                -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                9, -1, -1, -1, -1, -1, -1, -1, -1,
-                2, -1, -1, -1, -1, -1, -1, 6, -1
+                0, -1, -1,  0, -1, -1, -1,  1,  2,
+                0, -1, -1, -1, -1, -1, -1, -1,  3,
+                0, -1,  2,  3, -1, -1,  4, -1, -1,
+                0, -1,  1,  8, -1, -1, -1, -1,  5,
+                0,  6, -1, -1,  7, -1,  8, -1, -1,
+                0, -1, -1,  0, -1,  9, -1, -1,  0,
+                0, -1,  8,  5, -1, -1, -1, -1, -1,
+                9, -1, -1, -1,  4, -1,  5, -1, -1,
+                4,  7, -1, -1, -1,  6, -1,  0, -1
         });
-        System.out.println(sb.isValidOld(1,1));
+
+        /*
+        839|465|712|
+        146|782|953|
+        752|391|486|
+        ------------
+        391|824|675|
+        564|173|829|
+        287|659|341|
+        ------------
+        628|537|194|
+        913|248|567|
+        475|916|238|
+        ------------
+         */
+
+        long s = System.nanoTime();
+        System.out.println(diffSolve(sb));
+        long e = System.nanoTime();
+        System.out.println((e-s));
+        s = System.nanoTime();
+        System.out.println(solve(sb));
+        e = System.nanoTime();
+        System.out.println("diff"+(e-s));
+//
+        s = System.nanoTime();
+        System.out.println(solve(sb));
+        e = System.nanoTime();
+        System.out.println("diff"+(e-s));
+        s = System.nanoTime();
+        System.out.println(diffSolve(sb));
+        e = System.nanoTime();
+        System.out.println((e-s));
+//        System.out.println(sb.isValidOld(1,1));
 
 //        System.out.println(print(sb));
 //        System.out.println(print(solve(sb)));
@@ -232,6 +264,73 @@ public class SudokuBits {
     }
 
     //driver
+    public static List<Pair<Integer, List<Integer>>> getAllowedOptions(SudokuBits sb){
+        //get all places without a number
+        char[] c = BitHelper.fill(sb.orAll().toString(2),size).toCharArray();
+        // get all allowed moves
+        List<Pair<Integer,List<Integer>>> optionCount = new ArrayList<>();
+        for (int i = 0; i < c.length; i++) {
+            if (c[i] != '0') continue;
+            else {
+                Pair<Integer, List<Integer>> p = new Pair<>(i, new ArrayList<>());
+                for (int j = 1; j <= 9; j++)
+                    if (sb.isValid(j, i))
+                        p.end.add(j);
+
+                optionCount.add(p);
+            }
+        }
+        Collections.sort(optionCount, (a,b)->new Integer(a.end.size()).compareTo(b.end.size()));
+        return optionCount;
+    }
+    public static List<Pair<Integer, List<Integer>>> getAllowedOptionsSubset(SudokuBits sb, List<Pair<Integer, List<Integer>>> subset){
+        // get all allowed moves
+        List<Pair<Integer, List<Integer>>> subsetClone = new ArrayList<>();
+        for (Pair<Integer, List<Integer>> p : subset) {
+            List<Integer> allowed = new ArrayList<>();
+            for (Integer i : p.end)
+                if (sb.isValid(i, p.start))
+                    allowed.add(i);
+            Pair<Integer, List<Integer>> pp = new Pair<>(p.start, allowed);
+            subsetClone.add(pp);
+        }
+        Collections.sort(subsetClone, (a,b)->new Integer(a.end.size()).compareTo(b.end.size()));
+        return subsetClone;
+    }
+    public static SudokuBits diffSolve(SudokuBits sb){
+        return _diffSolve(sb,getAllowedOptions(sb));
+    }
+
+    private static SudokuBits _diffSolve(SudokuBits sb, List<Pair<Integer, List<Integer>>> optionCount) {
+        for(Pair<Integer, List<Integer>> s : optionCount){
+            for(Integer i : s.end) {
+                SudokuBits clone = sb.clone();
+                clone.putNumber(i , s.start);
+                ArrayList<Pair<Integer, List<Integer>>> temp = new ArrayList<>(optionCount);
+                temp.remove(s);
+                List<Pair<Integer, List<Integer>>> options = getAllowedOptionsSubset(clone,temp);//getAllowedOptions(clone);
+                List<Pair<Integer, List<Integer>>> remove = new ArrayList<>();
+                boolean noOptions = false;
+                for(Pair<Integer, List<Integer>> t : options){
+                    if(t.end.size()==0) {
+                        noOptions=true;
+                        break;//remove.add(t);
+                    }
+                    if(t.end.size() > 1 || t.end.size() == 0)
+                        break;
+                    clone.putNumber(t.end.get(0), t.start);
+                    remove.add(t);
+                }
+                if(noOptions)break;
+                options.removeAll(remove);
+                SudokuBits ss = _diffSolve(clone, options);
+                if(ss.orAll().bitCount()==size)
+                    return ss;
+            }
+        }
+        return sb;
+    }
+
     public static SudokuBits solve(SudokuBits sb){
         //get all places without a number
         char[] c = BitHelper.fill(sb.orAll().toString(2),size).toCharArray();

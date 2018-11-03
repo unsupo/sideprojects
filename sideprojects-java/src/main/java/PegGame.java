@@ -45,10 +45,10 @@ public class PegGame {
     public static void randomPlay(){
         PegGame p = new PegGame();
         Random r = new Random();
-        List<Pair> moves = p.getAllMoves();
+        List<Pair<Long,Long>> moves = p.getAllMoves();
         int i = 0;
         while (moves.size() > 0) {
-            Pair pair = moves.get(r.nextInt(moves.size()));
+            Pair<Long,Long> pair = moves.get(r.nextInt(moves.size()));
             p.jumpPeg(pair.start, pair.end);
             System.out.println(i++);
             System.out.println(p.pegs);
@@ -58,22 +58,22 @@ public class PegGame {
     }
 
 //    private static Random r = new Random();
-    public static List<Pair> solve(PegGame pg){
+    public static List<Pair<Long,Long>> solve(PegGame pg){
         return _solve(pg, new ArrayList<>());
-    }private static List<Pair> _solve(PegGame pg, List<Pair> allMoves){
+    }private static List<Pair<Long,Long>> _solve(PegGame pg, List<Pair<Long,Long>> allMoves){
         // TODO: 10/10/18 add memoizing
 //        System.out.println(pg.pegs);
         print(pg);
-        List<Pair> moves = pg.getAllMoves();
+        List<Pair<Long,Long>> moves = pg.getAllMoves();
 //        Collections.shuffle(moves);
         for (int i = 0; i < moves.size(); i++) {
             PegGame p = pg.clone();
             p.jumpPeg(moves.get(i).start,moves.get(i).end);
-            List<Pair> pairs = new ArrayList<>(allMoves);
+            List<Pair<Long,Long>> pairs = new ArrayList<>(allMoves);
             pairs.add(moves.get(i));
             if(Long.bitCount(p.pegs) == 1)
                 return pairs;
-            List<Pair> m = _solve(p, pairs);
+            List<Pair<Long,Long>> m = _solve(p, pairs);
             if(m != null)
                 return m;
         }
@@ -181,9 +181,9 @@ public class PegGame {
                 (v &~ CLEAR_LEFT) << 4 | (v &~ CLEAR_RIGHT) >> 4) &~ OUT_OF_BOUNDS;
     }
 
-    public List<Pair> getAllMoves(){
+    public List<Pair<Long,Long>> getAllMoves(){
         long a = getAllMovesStart();
-        List<Pair> pairs = new ArrayList<>();
+        List<Pair<Long,Long>> pairs = new ArrayList<>();
         for (int i = 0; i < EACH_POSITION.length; i++) //TODO can be improved by randomly searching until len of bits are found
             if((EACH_POSITION[i]|a)==a) {
                 long ss = getAllMovesFrom(EACH_POSITION[i]);
@@ -244,37 +244,6 @@ public class PegGame {
             if((i+1)%9==0)s+="\n";
         }
         return s;
-    }
-
-    public static class Pair{
-        long start,end;
-
-        public Pair(long start, long end) {
-            this.start = start;
-            this.end = end;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Pair pair = (Pair) o;
-            return start == pair.start &&
-                    end == pair.end;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(start, end);
-        }
-
-        @Override
-        public String toString() {
-            return "Pair{" +
-                    "start=" + start +
-                    ", end=" + end +
-                    '}';
-        }
     }
 
     /**
