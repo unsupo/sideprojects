@@ -4,7 +4,7 @@ import java.util.*;
 public class SudokuBits {
     public static void main(String[] args) throws Exception {
         //give an array of ints representing the sudoku puzzle to solve where any number not in [1-9] is a blank spot
-        SudokuBits sb = new SudokuBits(new int[]{
+        int[] board = new int[]{
                 0, -1, -1,  0, -1, -1, -1,  1,  2,
                 0, -1, -1, -1, -1, -1, -1, -1,  3,
                 0, -1,  2,  3, -1, -1,  4, -1, -1,
@@ -14,8 +14,7 @@ public class SudokuBits {
                 0, -1,  8,  5, -1, -1, -1, -1, -1,
                 9, -1, -1, -1,  4, -1,  5, -1, -1,
                 4,  7, -1, -1, -1,  6, -1,  0, -1
-        });
-
+        };
         /*
         839|465|712|
         146|782|953|
@@ -29,12 +28,45 @@ public class SudokuBits {
         913|248|567|
         475|916|238|
         ------------
-         */
 
+        346|485|712|
+        149|722|653|
+        752|391|489|
+        ------------
+        231|864|975|
+        564|273|831|
+        887|159|244|
+        ------------
+        618|522|347|
+        923|748|566|
+        475|936|128|
+        ------------
+         */
+        SudokuBits sb = new SudokuBits(board);
         long s = System.nanoTime();
-        System.out.println(diffSolve(sb));
+        System.out.println(solve(sb));
         long e = System.nanoTime();
         System.out.println((e-s));
+
+        Sudoku su = new Sudoku(board);
+        s = System.nanoTime();
+        System.out.println(Sudoku.solve(su));
+        e = System.nanoTime();
+        System.out.println((e-s));
+
+        s = System.nanoTime();
+        System.out.println(Sudoku.solve(su));
+        e = System.nanoTime();
+        System.out.println((e-s));
+
+        s = System.nanoTime();
+        System.out.println(solve(sb));
+        e = System.nanoTime();
+        System.out.println((e-s));
+
+
+
+        /*
         s = System.nanoTime();
         System.out.println(solve(sb));
         e = System.nanoTime();
@@ -48,6 +80,7 @@ public class SudokuBits {
         System.out.println(diffSolve(sb));
         e = System.nanoTime();
         System.out.println((e-s));
+        */
 //        System.out.println(sb.isValidOld(1,1));
 
 //        System.out.println(print(sb));
@@ -276,7 +309,6 @@ public class SudokuBits {
                 for (int j = 1; j <= 9; j++)
                     if (sb.isValid(j, i))
                         p.end.add(j);
-
                 optionCount.add(p);
             }
         }
@@ -305,23 +337,23 @@ public class SudokuBits {
         for(Pair<Integer, List<Integer>> s : optionCount){
             for(Integer i : s.end) {
                 SudokuBits clone = sb.clone();
-                clone.putNumber(i , s.start);
+                if(clone.isValid(i,s.start))
+                    clone.putNumber(i , s.start);
                 ArrayList<Pair<Integer, List<Integer>>> temp = new ArrayList<>(optionCount);
                 temp.remove(s);
-                List<Pair<Integer, List<Integer>>> options = getAllowedOptionsSubset(clone,temp);//getAllowedOptions(clone);
+                List<Pair<Integer, List<Integer>>> options = getAllowedOptionsSubset(clone,temp);//getAllowedOptionsSubset(clone,temp);//getAllowedOptions(clone);
                 List<Pair<Integer, List<Integer>>> remove = new ArrayList<>();
-                boolean noOptions = false;
+                boolean notAllowed = false;
                 for(Pair<Integer, List<Integer>> t : options){
-                    if(t.end.size()==0) {
-                        noOptions=true;
-                        break;//remove.add(t);
-                    }
+                    if(t.end.size()==0)
+                        notAllowed = true;
                     if(t.end.size() > 1 || t.end.size() == 0)
                         break;
-                    clone.putNumber(t.end.get(0), t.start);
+                    if(clone.isValid(t.end.get(0), t.start))
+                        clone.putNumber(t.end.get(0), t.start);
                     remove.add(t);
                 }
-                if(noOptions)break;
+                if(notAllowed)break;
                 options.removeAll(remove);
                 SudokuBits ss = _diffSolve(clone, options);
                 if(ss.orAll().bitCount()==size)
